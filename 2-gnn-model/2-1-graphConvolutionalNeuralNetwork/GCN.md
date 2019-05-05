@@ -16,6 +16,8 @@ $$ H^{(l+1)}=\sigma (\widetilde{D}^{-\frac{1}{2}}\widetilde{A}\widetilde{D}^{-\f
 $$ g_{\theta }\star x=Ug_{\theta }U^{T}x  $$
 这个公式本身很准确，但是这里面*g*是一个对角矩阵，对角线上每一个元素都是要学习的参数。矩阵*U*是拉氏矩阵的特征向量组成的矩阵，这样的公式显然其计算量是太大了。那么作者考虑的是使用近似，这里借助前几年的研究，用切比雪夫多项式的思想。首先讲前面复杂的矩阵运算部分理解为是对拉氏矩阵特征值的操作，这样的话，再结合[切比雪夫多项式](https://en.wikipedia.org/wiki/Chebyshev_polynomials)，就能将*g*进行近似
 $$ g_{\theta^{\prime}}(\Lambda) \approx \sum_{k=0}^{K} \theta_{k}^{\prime} T_{k}(\tilde{\Lambda}) $$
+于是这样下来就可以得到卷积的近似为
+$$ g_{\theta^{\prime}} \star x \approx \sum_{k=0}^{K} \theta_{k}^{\prime} T_{k}(\tilde{L}) x $$
 
 ## Loss
 
