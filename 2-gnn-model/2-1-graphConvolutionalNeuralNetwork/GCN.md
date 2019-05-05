@@ -68,7 +68,7 @@ class MessagePassing(torch.nn.Module):
 ```
 这一部分的具体是想要去实现在pytorch geometric的论文中所说的2017年另一篇文章中提到的信息传输方案。  
 
-
+![meassage processing scheme](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/GCN_pic3.png?raw=true)
 
 这个代码里面最主要的其实是*propogation*部分，他给出了一个很有趣的计算方式，我们结合GCN这篇文章来说明一下。
 ```Python
