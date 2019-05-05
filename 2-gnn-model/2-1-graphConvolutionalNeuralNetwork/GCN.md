@@ -67,7 +67,7 @@ class MessagePassing(torch.nn.Module):
         self.update_args = inspect.getargspec(self.update)[0][2:]
 ```
 这一部分的具体是想要去实现在pytorch geometric的论文中所说的2017年另一篇文章中提到的信息传输方案。
-$$ \vec{x}_{i}^{(k)}=\gamma^{(k)}\left(\vec{x}_{i}^{(k-1)}, \prod_{j \in \mathcal{N}(i)} \phi^{(k)}\left(\vec{x}_{i}^{(k-1)}, \vec{x}_{j}^{(k-1)}, \vec{e}_{i, j}\right)\right) $$  
+$$ \vec{x}_{i}^{(k)}=\gamma^{(k)}\left(\vec{x}_{i}^{(k-1)}, \prod_{j \in \mathcal{N}(i)} \phi^{(k)}\left(\vec{x}_{i}^{(k-1)}, \vec{x}_{j}^{(k-1)}, \vec{e}_{i, j}\right)\right) $$
 
 这个代码里面最主要的其实是*propogation*部分，他给出了一个很有趣的计算方式，我们结合GCN这篇文章来说明一下。
 ```Python
