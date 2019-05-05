@@ -30,7 +30,8 @@ $$ Z=\sigma (AXW) $$
 在***pytorch geometric***这个项目里面为了能够提供一个通用的架构，那么他是有一个作为基本信息传输的模型类*message_passing*，其代码如下：
 ```python
 class MessagePassing(torch.nn.Module):
-    r"""Base class for creating message passing layers
+    '''
+    Base class for creating message passing layers
 
     .. math::
         \mathbf{x}_i^{\prime} = \gamma_{\mathbf{\Theta}} \left( \mathbf{x}_i,
@@ -51,7 +52,7 @@ class MessagePassing(torch.nn.Module):
         flow (string, optional): The flow direction of message passing
             (:obj:`"source_to_target"` or :obj:`"target_to_source"`).
             (default: :obj:`"source_to_target"`)
-    """
+    '''
 
     def __init__(self, aggr='add', flow='source_to_target'):
         super(MessagePassing, self).__init__()
