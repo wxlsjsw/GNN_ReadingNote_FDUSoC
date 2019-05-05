@@ -18,7 +18,53 @@ $$ g_{\theta }\star x=Ug_{\theta }U^{T}x  $$
 $$ g_{\theta^{\prime}}(\Lambda) \approx \sum_{k=0}^{K} \theta_{k}^{\prime} T_{k}(\tilde{\Lambda}) $$
 于是这样下来就可以得到卷积的近似为
 $$ g_{\theta^{\prime}} \star x \approx \sum_{k=0}^{K} \theta_{k}^{\prime} T_{k}(\tilde{L}) x $$
+有理论论证这样的近似之后，整体的计算复杂度就大大降低了。接下来，在本文中，作者采用了K=1，这样就是一个线性的模型。另外，作者说这里近似了特征值的最大值是2，我到现在也是不太清楚为什么，在几篇不同的文章里都已经看过类似的说法，我也不太清楚发生了什么，暂时照着这个想法继续，不行的话我去问几个明白人问问。总之，这样就可以得到前面提到的卷积的有效近似。
+$$ g_{\theta^{\prime}} \star x \approx \theta_{0}^{\prime} x+\theta_{1}^{\prime}\left(L-I_{N}\right) x=\theta_{0}^{\prime} x-\theta_{1}^{\prime} D^{-\frac{1}{2}} A D^{-\frac{1}{2}} x $$
+这样的话就留下了两组需要学习的参数，为了更加简化，就令两组矩阵互为相反数，这样就得到了下面这个极其简洁的形式。
+$$ g_{\theta} \star x \approx \theta\left(I_{N}+D^{-\frac{1}{2}} A D^{-\frac{1}{2}}\right) x $$
+为了更加简洁，另外从一个矩阵的角度去思考，就可以得到一个二维的图的频域卷积公式：
+$$ Z=\tilde{D}^{-\frac{1}{2}} \tilde{A} \tilde{D}^{-\frac{1}{2}} X \Theta $$
+那么咱们从定性的角度去看这样的网络的话，那么就是三个部分
+$$ Z=\sigma (AXW) $$
+*A*是图结构的内部信息，*X*是输入，*W*是输入的矩阵，\sigma是激活函数，这样来看就和我们之前熟悉的普通的神经网络很相似了，那么这些道理我们都懂，实际的代码是怎么实现的呢？  
+在***pytorch geometric***这个项目里面为了能够提供一个通用的架构，那么他是有一个作为基本信息传输的模型类*message_passing*，其代码如下：
+```python
+class MessagePassing(torch.nn.Module):
+    r"""Base class for creating message passing layers
 
+    .. math::
+        \mathbf{x}_i^{\prime} = \gamma_{\mathbf{\Theta}} \left( \mathbf{x}_i,
+        \square_{j \in \mathcal{N}(i)} \, \phi_{\mathbf{\Theta}}
+        \left(\mathbf{x}_i, \mathbf{x}_j,\mathbf{e}_{i,j}\right) \right),
+
+    where :math:`\square` denotes a differentiable, permutation invariant
+    function, *e.g.*, sum, mean or max, and :math:`\gamma_{\mathbf{\Theta}}`
+    and :math:`\phi_{\mathbf{\Theta}}` denote differentiable functions such as
+    MLPs.
+    See `here <https://rusty1s.github.io/pytorch_geometric/build/html/notes/
+    create_gnn.html>`__ for the accompanying tutorial.
+
+    Args:
+        aggr (string, optional): The aggregation scheme to use
+            (:obj:`"add"`, :obj:`"mean"` or :obj:`"max"`).
+            (default: :obj:`"add"`)
+        flow (string, optional): The flow direction of message passing
+            (:obj:`"source_to_target"` or :obj:`"target_to_source"`).
+            (default: :obj:`"source_to_target"`)
+    """
+
+    def __init__(self, aggr='add', flow='source_to_target'):
+        super(MessagePassing, self).__init__()
+
+        self.aggr = aggr
+        assert self.aggr in ['add', 'mean', 'max']
+
+        self.flow = flow
+        assert self.flow in ['source_to_target', 'target_to_source']
+
+        self.message_args = inspect.getargspec(self.message)[0][1:]
+        self.update_args = inspect.getargspec(self.update)[0][2:]
+```
 ## Loss
 
 ## 实验
