@@ -28,7 +28,7 @@ $$ Z=\tilde{D}^{-\frac{1}{2}} \tilde{A} \tilde{D}^{-\frac{1}{2}} X \Theta $$
 $$ Z=\sigma (AXW) $$
 *A*是图结构的内部信息，*X*是输入，*W*是输入的矩阵，\sigma是激活函数，这样来看就和我们之前熟悉的普通的神经网络很相似了，那么这些道理我们都懂，实际的代码是怎么实现的呢？  
 在***pytorch geometric***这个项目里面为了能够提供一个通用的架构，那么他是有一个作为基本信息传输的模型类*message_passing*，其代码如下：
-```python
+```Python
 class MessagePassing(torch.nn.Module):
     '''
     Base class for creating message passing layers
@@ -66,6 +66,146 @@ class MessagePassing(torch.nn.Module):
         self.message_args = inspect.getargspec(self.message)[0][1:]
         self.update_args = inspect.getargspec(self.update)[0][2:]
 ```
+这一部分的具体是想要去实现在pytorch geometric的论文中所说的2017年另一篇文章中提到的信息传输方案。
+$$ \vec{x}_{i}^{(k)}=\gamma^{(k)}\left(\vec{x}_{i}^{(k-1)}, \prod_{j \in \mathcal{N}(i)} \phi^{(k)}\left(\vec{x}_{i}^{(k-1)}, \vec{x}_{j}^{(k-1)}, \vec{e}_{i, j}\right)\right) $$  
+
+这个代码里面最主要的其实是*propogation*部分，他给出了一个很有趣的计算方式，我们结合GCN这篇文章来说明一下。
+```Python
+def propagate(self, edge_index, size=None, **kwargs):
+        size = [None, None] if size is None else list(size)
+        assert len(size) == 2
+
+        kwargs['edge_index'] = edge_index
+        i, j = (0, 1) if self.flow == 'target_to_source' else (1, 0)
+        ij = {"_i": i, "_j": j}
+
+        message_args = []
+        for arg in self.message_args:
+            if arg[-2:] in ij.keys():
+                tmp = kwargs[arg[:-2]]
+                if tmp is None:  # pragma: no cover
+                    message_args.append(tmp)
+                else:
+                    idx = ij[arg[-2:]]
+                    if isinstance(tmp, tuple) or isinstance(tmp, list):
+                        assert len(tmp) == 2
+                        if size[1 - idx] is None:
+                            size[1 - idx] = tmp[1 - idx].size(0)
+                        if size[1 - idx] != tmp[1 - idx].size(0):
+                            raise ValueError(_size_error_msg)
+                        tmp = tmp[idx]
+
+                    if size[idx] is None:
+                        size[idx] = tmp.size(0)
+                    if size[idx] != tmp.size(0):
+                        raise ValueError(_size_error_msg)
+
+                    tmp = torch.index_select(tmp, 0, edge_index[idx])
+                    message_args.append(tmp)
+            else:
+                message_args.append(kwargs[arg])
+
+        size[0] = size[1] if size[0] is None else size[0]
+        size[1] = size[0] if size[1] is None else size[1]
+
+        kwargs['size'] = size
+        update_args = [kwargs[arg] for arg in self.update_args]
+
+        out = self.message(*message_args)
+        out = scatter_(self.aggr, out, edge_index[i], dim_size=size[i])
+        out = self.update(out, *update_args)
+
+        return out
+```
+先不急，我们先来看一下GCN这部分实现的代码。
+``` Python
+class GCNConv(MessagePassing):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 improved=False,
+                 cached=False,
+                 bias=True):
+        super(GCNConv, self).__init__('add')
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.improved = improved
+        self.cached = cached
+        self.cached_result = None
+
+        self.weight = Parameter(torch.Tensor(in_channels, out_channels))
+
+        if bias:
+            self.bias = Parameter(torch.Tensor(out_channels))
+        else:
+            self.register_parameter('bias', None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        glorot(self.weight)
+        zeros(self.bias)
+        self.cached_result = None
+
+    @staticmethod
+    def norm(edge_index, num_nodes, edge_weight, improved=False, dtype=None):
+        if edge_weight is None:
+            edge_weight = torch.ones((edge_index.size(1), ),
+                                     dtype=dtype,
+                                     device=edge_index.device)
+        edge_weight = edge_weight.view(-1)
+        assert edge_weight.size(0) == edge_index.size(1)
+
+        edge_index, edge_weight = remove_self_loops(edge_index, edge_weight)
+        edge_index = add_self_loops(edge_index, num_nodes)
+        loop_weight = torch.full((num_nodes, ),
+                                 1 if not improved else 2,
+                                 dtype=edge_weight.dtype,
+                                 device=edge_weight.device)
+        edge_weight = torch.cat([edge_weight, loop_weight], dim=0)
+
+        row, col = edge_index
+        deg = scatter_add(edge_weight, row, dim=0, dim_size=num_nodes)
+        deg_inv_sqrt = deg.pow(-0.5)
+        deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
+
+        return edge_index, deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
+
+    def forward(self, x, edge_index, edge_weight=None):
+        """"""
+        x = torch.matmul(x, self.weight)
+
+        if not self.cached or self.cached_result is None:
+            edge_index, norm = GCNConv.norm(edge_index, x.size(0), edge_weight,
+                                            self.improved, x.dtype)
+            self.cached_result = edge_index, norm
+        edge_index, norm = self.cached_result
+
+        return self.propagate(edge_index, x=x, norm=norm)
+
+    def message(self, x_j, norm):
+        return norm.view(-1, 1) * x_j
+
+    def update(self, aggr_out):
+        if self.bias is not None:
+            aggr_out = aggr_out + self.bias
+        return aggr_out
+```
+首先回忆一下GCN的卷积公式。
+$$ Z=\tilde{D}^{-\frac{1}{2}} \tilde{A} \tilde{D}^{-\frac{1}{2}} X \Theta $$
+在代码里面的*norm*部分，计算的是公式里D^{-1/2}这一块，然后在*forward*的部分里，首先计算*XW*,之后计算出*norm*，再借用*message passing*里面的*propogation*函数，这个函数里面
+```Python
+    out = self.message(*message_args)
+```
+```Python
+def message(self, x_j, norm):
+    return norm.view(-1, 1) * x_j
+```
+那么这一步就相当于在计算
+$$ \tilde{D}^{-\frac{1}{2}} X \Theta $$
+紧接下来是*message passing*里面一些有趣的操作，包括作者自己巧妙地利用*scatter*函数的功能去实现了剩下的计算，我们暂时就不在这里赘述了，总之这样的代码的确是实现了GCN的传播公式。而且也是保证了较小的计算量的。  
+
 ## Loss
 
 ## 实验
