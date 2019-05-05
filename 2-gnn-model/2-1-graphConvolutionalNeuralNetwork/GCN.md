@@ -4,7 +4,7 @@
   
 这篇是第一个笔记，作为实验。  
     除去综述那一篇，我的主要工作是围绕着github上面[pytorch geometric](https://github.com/rusty1s/pytorch_geometric)这个项目。这样的主要原因是，在看过综述和几篇模型之后还是觉得对于图网络的模型和原理是认识了，但是对于如何在代码中具体实现，以及具体的图的数据结构是什么样的都不是很清楚。甚至于都不是特别清楚图网络到底能什么？（这个问题在之后的文章里我觉得还是要多聊聊的，有关图网络要解决什么问题，在一些文章里还是有一些分析的）碰巧是这个时候刷到了这个项目，然后就跟着这个项目里涉及的17、18年的20几篇GNN相关的文章来同步理解。这篇_Semi-Supervised Classification with Graph Convolutional Network_是其中的第一篇，主要讲的是GCN，是我看的第一篇明确在讲自己是做spectral domain的图**卷积**的文章。所以从这里开始，最基本的**图卷积**的概念来理解还是比较方便的。    
-    在这一篇文章里面，前面简单论述了图卷积自身的基本的原理，并没有太深入的数学部分，直接讲最主要的结论了，这点是比较好的，我们在接下来[模型](##模型)这一部分会仔细推导一下的。值得一提的是，本文中也对于图的结构该如何计算loss进行了简述，这里还是很不错的，我们在[Loss](##Loss)会说明一下。之后要说的点就是实验，实际上对于图网络究竟能解决什么样的问题，我个人觉得还是没有特别大的变化，无论是零几年时候的开篇之作，还是目前对于图网络的这些入门作品，我看到的觉得还是觉得变化不大的，可能是应用这里我读的数量还不够，接下来我觉得还是很有必要讨论一下的。在[实验](##实验)一部分里我们会讨论一下本文的实验，以及我们自己复现的时候做出来的结果和理解。  
+    在这一篇文章里面，前面简单论述了图卷积自身的基本的原理，并没有太深入的数学部分，直接讲最主要的结论了，这点是比较好的，我们在接下来[模型](##模型)这一部分会仔细推导一下的。值得一提的是，本文中也对于图的结构该如何计算loss进行了简述，这里还是很不错的。之后要说的点就是实验，实际上对于图网络究竟能解决什么样的问题，我个人觉得还是没有特别大的变化，无论是零几年时候的开篇之作，还是目前对于图网络的这些入门作品，我看到的觉得还是觉得变化不大的，可能是应用这里我读的数量还不够，接下来我觉得还是很有必要讨论一下的。在[实验](##实验)一部分里我们会讨论一下本文的实验，以及我们自己复现的时候做出来的结果和理解。  
     好了，让我们开始吧。  
 
 ## 模型
@@ -206,8 +206,33 @@ def message(self, x_j, norm):
 $$ \tilde{D}^{-\frac{1}{2}} X \Theta $$
 紧接下来是*message passing*里面一些有趣的操作，包括作者自己巧妙地利用*scatter*函数的功能去实现了剩下的计算，我们暂时就不在这里赘述了，总之这样的代码的确是实现了GCN的传播公式。而且也是保证了较小的计算量的。  
 
-## Loss
+## 实验  
 
-## 实验
+我们之后应该也会反复地讨论，GNN到底能解决什么样的问题，在一些综述性的文章里面有指出，其实我们要解决是三类问题，第一是对于点的分类&回归，第二是对于图的分类&回归，第三是混合型问题。那么这么来看，本文实现的是第一种应用，我们自己复现的是其在文章引用网络中的应用，原文中是几个不同的半监督分类问题，包括文件分类，文章分类，知识图谱等等。我们就先主要介绍一下我们复现的。我们复现的建立在Cora数据集的实验，这个数据集主要描述的是文章引用的关系。对于每一篇文章都有若干个来自于其中文本词汇的**feature**，然后数据集也会给出其中的引用关系作为边，而且是有向边，之后为每一个文件都赋予了一个class作为label，然后我们算法就是在非监督的条件下，能够对文章进行分类。
+|Dataset|Type|Nodes|Edges|Classes|Features|Label rate|
+|-------|----|-----|-----|-------|--------|----------|
+|Cora|Citation Network|2708|5429|7|1433|0.052|
+然后这里就是很基本利用了两层GCN，我们可以认为就是实现了下式。
+$$ Z=f(X, A)=\operatorname{softmax}\left(\hat{A} \operatorname{ReLU}\left(\hat{A} X W^{(0)}\right) W^{(1)}\right) $$
+```Python
+class Net(torch.nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = GCNConv(dataset.num_features, 16, cached=True)
+        self.conv2 = GCNConv(16, dataset.num_classes, cached=True)
+
+    def forward(self):
+        x, edge_index = data.x, data.edge_index
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.dropout(x, training=self.training)
+        x = self.conv2(x, edge_index)
+        return F.log_softmax(x, dim=1)
+
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model, data = Net().to(device), data.to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+```
+最后我们实现出了原文中所描述的效果，而且在服务器上的运行速度非常快，说明在这个问题上网络的确发挥出了理论上的想法。
 
 ## 总结
