@@ -231,9 +231,9 @@ model, data = Net().to(device), data.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 ```
 最后我们实现出了原文中所描述的效果，而且在服务器上的运行速度非常快，说明在这个问题上网络的确发挥出了理论上的想法。  
-![exp result](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/QQ%E6%88%AA%E5%9B%BE20190505162348.png?raw=true)  
+![exp result1](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/GCN_pic1.png?raw=true)  
 注意到一个问题，在原文中对于模型的效果进行了实验验证，最后显示，在当前建立在一些约束条件下的近似能够得到更好的效果，**甚至要好于一些高阶的切比雪夫多项式近似**，我现在还说不清楚为什么，我的感觉是这样的近似更加符合作为验证的数据集自身的特性，而且文章最后也说到了本文涉及到一些假设并不总能适用，所以这个问题我们可以在ChebNet的文章里再去考虑考虑。  
-
+![exp result2](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/GCN_pic1.png?raw=true)  
 ## 总结  
 
 本文中对于应用于图的卷积网络提出了合理科学的数学模型，并且出于实现的角度，对其进行了有效的近似，从而在保证（甚至更好）基本效果的情况下得到了更高的效率。为我们对于图网络以及相关知识的学习开了一个头。
