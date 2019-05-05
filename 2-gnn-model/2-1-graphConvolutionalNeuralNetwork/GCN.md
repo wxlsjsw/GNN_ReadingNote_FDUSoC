@@ -209,11 +209,6 @@ $$ \tilde{D}^{-\frac{1}{2}} X \Theta $$
 ## 实验  
 
 我们之后应该也会反复地讨论，GNN到底能解决什么样的问题，在一些综述性的文章里面有指出，其实我们要解决是三类问题，第一是对于点的分类&回归，第二是对于图的分类&回归，第三是混合型问题。那么这么来看，本文实现的是第一种应用，我们自己复现的是其在文章引用网络中的应用，原文中是几个不同的半监督分类问题，包括文件分类，文章分类，知识图谱等等。我们就先主要介绍一下我们复现的。我们复现的建立在Cora数据集的实验，这个数据集主要描述的是文章引用的关系。对于每一篇文章都有若干个来自于其中文本词汇的**feature**，然后数据集也会给出其中的引用关系作为边，而且是有向边，之后为每一个文件都赋予了一个class作为label，然后我们算法就是在非监督的条件下，能够对文章进行分类。  
-| name  | age | gender    | money  |
--------|:---:|-----------|-------:
-| rhio  | 384 | robot     | $3,000 |
-| haroo | .3  | bird      | $430   |
-| jedi  | ?   | undefined | $0     |
 然后这里就是很基本利用了两层GCN，我们可以认为就是实现了下式。
 $$ Z=f(X, A)=\operatorname{softmax}\left(\hat{A} \operatorname{ReLU}\left(\hat{A} X W^{(0)}\right) W^{(1)}\right) $$
 ```Python
@@ -236,5 +231,9 @@ model, data = Net().to(device), data.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 ```
 最后我们实现出了原文中所描述的效果，而且在服务器上的运行速度非常快，说明在这个问题上网络的确发挥出了理论上的想法。  
-![exp result](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/QQ%E6%88%AA%E5%9B%BE20190505162348.png?raw=true)
-## 总结
+![exp result](https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/QQ%E6%88%AA%E5%9B%BE20190505162348.png?raw=true)  
+注意到一个问题，在原文中对于模型的效果进行了实验验证，最后显示，在当前建立在一些约束条件下的近似能够得到更好的效果，**甚至要好于一些高阶的切比雪夫多项式近似**，我现在还说不清楚为什么，我的感觉是这样的近似更加符合作为验证的数据集自身的特性，而且文章最后也说到了本文涉及到一些假设并不总能适用，所以这个问题我们可以在ChebNet的文章里再去考虑考虑。  
+
+## 总结  
+
+本文中对于应用于图的卷积网络提出了合理科学的数学模型，并且出于实现的角度，对其进行了有效的近似，从而在保证（甚至更好）基本效果的情况下得到了更高的效率。为我们对于图网络以及相关知识的学习开了一个头。
