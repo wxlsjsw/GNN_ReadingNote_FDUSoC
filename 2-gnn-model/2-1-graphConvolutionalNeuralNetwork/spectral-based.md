@@ -2,4 +2,4 @@
 
 ## Relate Papers
 
-[Convolutional neural networks on graphs with fast localized spectral filtering](https://arxiv.org/abs/1606.09375)
+- [Convolutional neural networks on graphs with fast localized spectral filtering](https://arxiv.org/abs/1606.09375)
