@@ -6,7 +6,7 @@ Spectral-based方法在图信号(graph signal processing)处理中已经有了�
 
 在Spectral-based的模型中，图通常被假定为无向图。对无向图比较鲁棒的表示方法是归一化的拉普拉斯矩阵（Normalized graph Laplacian matrix）,归一化的拉普拉斯矩阵被定义为：
 
-<img src="https://rawgit.com/wxlsjsw/GNN_ReadingNote_FDUSoC (fetch/master/svgs/ef4b7c64139b6b42a500769d1c2dcabe.svg?invert_in_darkmode" align=middle width=174.403845pt height=29.12679000000001pt/>
+<img src="https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/ (fetch/master/svgs/ef4b7c64139b6b42a500769d1c2dcabe.svg?invert_in_darkmode" align=middle width=174.403845pt height=29.12679000000001pt/>
 
 
 
