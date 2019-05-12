@@ -1,12 +1,4 @@
-<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>  
-<script type="text/x-mathjax-config">  
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [['$$','$$'], ['\\\\(','\\\\)']],
-            processEscapes: true
-        }
-    });
-</script>
+
 
 ## This is the reading note of spatial-based graph convolutional neural network
 
@@ -16,7 +8,7 @@ Spectral-based方法在图信号(graph signal processing)处理中已经有了�
 
 在Spectral-based的模型中，图通常被假定为无向图。对无向图比较鲁棒的表示方法是归一化的拉普拉斯矩阵（Normalized graph Laplacian matrix）,归一化的拉普拉斯矩阵被定义为：
 
-$i + j$
+<a href="https://www.codecogs.com/eqnedit.php?latex=$i&space;&plus;j$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$i&space;&plus;j$" title="$i +j$" /></a>
 
 
 
