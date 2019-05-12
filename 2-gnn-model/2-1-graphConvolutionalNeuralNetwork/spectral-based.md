@@ -1,3 +1,13 @@
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.3/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>  
+<script type="text/x-mathjax-config">  
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$$','$$'], ['\\\\(','\\\\)']],
+            processEscapes: true
+        }
+    });
+</script>
+
 ## This is the reading note of spatial-based graph convolutional neural network
 
 ## 来自对《[A Comprehensive Survey on Graph Neural Networks](https://arxiv.org/abs/1901.00596?context=cs)》的spectral-based GCN部分的翻译
@@ -6,7 +16,7 @@ Spectral-based方法在图信号(graph signal processing)处理中已经有了�
 
 在Spectral-based的模型中，图通常被假定为无向图。对无向图比较鲁棒的表示方法是归一化的拉普拉斯矩阵（Normalized graph Laplacian matrix）,归一化的拉普拉斯矩阵被定义为：
 
-<img src="https://github.com/wxlsjsw/GNN_ReadingNote_FDUSoC/blob/master/2-gnn-model/2-1-graphConvolutionalNeuralNetwork/ (fetch/master/svgs/ef4b7c64139b6b42a500769d1c2dcabe.svg?invert_in_darkmode" align=middle width=174.403845pt height=29.12679000000001pt/>
+$i + j$
 
 
 
